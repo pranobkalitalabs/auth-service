@@ -73,6 +73,20 @@ For serverless cloud deployment, you can use:
 
 ---
 
+## 🤖 Automated Continuous Deployment (GitHub Actions CD)
+
+Whenever you push to the `main` branch, GitHub Actions automatically:
+1. Executes the unit, integration, and Cucumber BDD test suites.
+2. Builds the multi-arch container image with Jib and publishes to Docker Hub.
+3. Automatically triggers **Google Cloud Run** to roll out a new revision with zero downtime.
+
+### Required GitHub Repository Secrets (`Settings -> Secrets and variables -> Actions`):
+- `DOCKERHUB_USERNAME`: Your Docker Hub username.
+- `DOCKERHUB_TOKEN`: Your Docker Hub personal access token.
+- `GCP_SA_KEY`: Google Cloud Service Account JSON Key (with `Cloud Run Admin` & `Service Account User` roles).
+
+---
+
 ## 🔒 Production Smoke Test
 
 ```bash
