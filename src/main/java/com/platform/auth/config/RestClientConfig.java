@@ -12,7 +12,7 @@ public class RestClientConfig {
     @Value("${app.services.address-service-url:http://localhost:8082}")
     private String addressServiceUrl;
 
-    @Value("${app.services.timeout-ms:3000}")
+    @Value("${app.services.timeout-ms:1500}")
     private int timeoutMs;
 
     @Bean

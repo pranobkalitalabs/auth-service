@@ -10,6 +10,7 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
     TokenRefreshResponse refreshToken(RefreshTokenRequest request);
     ApiResponse<Void> logout(RefreshTokenRequest request);
+    ApiResponse<Void> logout(RefreshTokenRequest request, String bearerToken);
     ApiResponse<String> requestPasswordReset(PasswordResetRequest request);
     ApiResponse<Void> resetPassword(ResetPasswordSubmitRequest request);
 }

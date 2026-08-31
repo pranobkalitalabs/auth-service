@@ -18,10 +18,15 @@ app:
     refresh-token-expiration-ms: 86400000
     issuer: test-platform
   admin:
-    default-email: testadmin@platform.com
+    default-email: admin@platform.com
     default-password: Admin@123456
-    default-first-name: Test
-    default-last-name: Admin
+    default-first-name: System
+    default-last-name: Administrator
+  rate-limiting:
+    enabled: true
+    login-per-minute: 10
+    register-per-minute: 5
+    forgot-password-per-minute: 3
   uk-address:
     postcodes-api-url: https://api.postcodes.io
     timeout-ms: 2000

@@ -46,9 +46,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Revoke refresh token and logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequest request) {
-        ApiResponse<Void> response = authService.logout(request);
+    @Operation(summary = "Revoke refresh token, blacklist access token, and logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody RefreshTokenRequest request,
+            @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+        ApiResponse<Void> response = authService.logout(request, bearerToken);
         return ResponseEntity.ok(response);
     }
 

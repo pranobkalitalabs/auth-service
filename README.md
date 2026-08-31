@@ -31,18 +31,24 @@ For detailed technical guides, please refer to the dedicated documents in the [`
 
 ---
 
-## ⚡ Quick Start & Maven Jib Build
+## ⚡ Quick Start & Docker Compose
 
-### 1. Build Local Container with Google Jib (5 Seconds)
+### 1. Run Standalone Auth Stack (Postgres + Mailpit + Auth Service)
+```bash
+docker compose up -d
+```
+
+### 2. Build Local Container with Google Jib (5 Seconds)
 ```bash
 mvn compile jib:dockerBuild
 ```
 
-### 2. Run Full Container Stack (Auth + Address + Postgres + Redis + Mailpit)
+### 3. Run Behavior-Driven Development (BDD) Cucumber Tests
 ```bash
-# From workspace root:
-docker compose up -d
+# Run Gherkin feature scenarios
+mvn test -Dtest=AuthCucumberTest
 ```
+> 📊 **HTML Living Report**: Generated at `target/cucumber-reports/cucumber.html`.
 
 Test that the service is running:
 ```bash

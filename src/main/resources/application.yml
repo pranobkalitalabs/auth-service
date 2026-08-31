@@ -27,6 +27,11 @@ app:
   services:
     address-service-url: ${ADDRESS_SERVICE_URL:http://localhost:8082}
     timeout-ms: 3000
+  rate-limiting:
+    enabled: true
+    login-per-minute: 10
+    register-per-minute: 5
+    forgot-password-per-minute: 3
   cors:
     allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080,https://pranobkalitalabs.co.uk,https://*.pranobkalitalabs.co.uk}"
     allowed-methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"

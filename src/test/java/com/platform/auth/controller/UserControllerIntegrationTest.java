@@ -61,7 +61,7 @@ class UserControllerIntegrationTest {
                 .andExpect(status().isCreated());
 
         String userToken = obtainToken("bob.user@example.co.uk", "Password@123");
-        String adminToken = obtainToken("testadmin@platform.com", "Admin@123456");
+        String adminToken = obtainToken("admin@platform.com", "Admin@123456");
 
         // 2. Fetch current user profile (/me)
         mockMvc.perform(get("/api/v1/users/me")

@@ -55,6 +55,7 @@ public class JwtTokenProvider {
                 .collect(Collectors.toList());
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userPrincipal.getId().toString())
                 .claim("email", userPrincipal.getEmail())
                 .claim("roles", roles)
@@ -63,6 +64,17 @@ public class JwtTokenProvider {
                 .expiration(Date.from(expiryDate))
                 .signWith(key)
                 .compact();
+    }
+
+    public long getRemainingExpirationMs(String token) {
+        try {
+            Claims claims = getClaims(token);
+            Date expiration = claims.getExpiration();
+            long remaining = expiration.getTime() - System.currentTimeMillis();
+            return Math.max(remaining, 0);
+        } catch (Exception ex) {
+            return 0;
+        }
     }
 
     public UUID getUserIdFromToken(String token) {

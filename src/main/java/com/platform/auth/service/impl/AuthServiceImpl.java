@@ -15,6 +15,7 @@ import com.platform.auth.repository.RoleRepository;
 import com.platform.auth.repository.UserRepository;
 import com.platform.auth.security.JwtTokenProvider;
 import com.platform.auth.security.UserPrincipal;
+import com.platform.auth.security.blacklist.TokenBlacklistService;
 import com.platform.auth.service.AuthService;
 import com.platform.auth.service.RefreshTokenService;
 import com.platform.auth.service.UkAddressService;
@@ -47,6 +48,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UkAddressService ukAddressService;
     private final JwtProperties jwtProperties;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthServiceImpl(UserRepository userRepository,
                            RoleRepository roleRepository,
@@ -56,7 +58,8 @@ public class AuthServiceImpl implements AuthService {
                            RefreshTokenService refreshTokenService,
                            PasswordResetTokenRepository passwordResetTokenRepository,
                            UkAddressService ukAddressService,
-                           JwtProperties jwtProperties) {
+                           JwtProperties jwtProperties,
+                           TokenBlacklistService tokenBlacklistService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -66,6 +69,7 @@ public class AuthServiceImpl implements AuthService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.ukAddressService = ukAddressService;
         this.jwtProperties = jwtProperties;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -179,8 +183,24 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public ApiResponse<Void> logout(RefreshTokenRequest request) {
-        refreshTokenService.findByToken(request.getRefreshToken())
-                .ifPresent(refreshTokenService::deleteToken);
+        return logout(request, null);
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<Void> logout(RefreshTokenRequest request, String bearerToken) {
+        if (request != null && request.getRefreshToken() != null) {
+            refreshTokenService.findByToken(request.getRefreshToken())
+                    .ifPresent(refreshTokenService::deleteToken);
+        }
+
+        if (bearerToken != null && !bearerToken.isBlank()) {
+            String token = bearerToken.startsWith("Bearer ") ? bearerToken.substring(7) : bearerToken;
+            long remainingTtl = tokenProvider.getRemainingExpirationMs(token);
+            if (remainingTtl > 0) {
+                tokenBlacklistService.blacklistToken(token, remainingTtl);
+            }
+        }
 
         return ApiResponse.success("Log out successful");
     }

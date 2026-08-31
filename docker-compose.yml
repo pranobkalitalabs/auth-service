@@ -1,9 +1,11 @@
-version: '3.8'
-
 services:
+  # ============================================================================
+  # 1. PostgreSQL Relational Database (Port 5432)
+  # ============================================================================
   postgres:
     image: postgres:16-alpine
-    container_name: auth-postgres
+    container_name: auth-postgres-standalone
+    restart: unless-stopped
     environment:
       POSTGRES_DB: authdb
       POSTGRES_USER: postgres
@@ -18,31 +20,41 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================================================
+  # 2. Mailpit SMTP Server & Web Inspector (Web: 8025, SMTP: 1025)
+  # ============================================================================
   mailpit:
     image: axllent/mailpit:latest
-    container_name: auth-mailpit
+    container_name: auth-mailpit-standalone
+    restart: unless-stopped
     ports:
       - "1025:1025" # SMTP port
       - "8025:8025" # Web UI port
 
+  # ============================================================================
+  # 3. Auth & IAM Microservice (Port 8081)
+  # ============================================================================
   auth-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: auth-service
+    image: pkalita/auth-service:latest
+    container_name: auth-service-standalone
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     ports:
       - "8081:8081"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: authdb
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgrespassword
-      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8081
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=authdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgrespassword
+      - ADDRESS_SERVICE_URL=https://address.pranobkalitalabs.co.uk
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,https://pranobkalitalabs.co.uk
 
 volumes:
   auth_postgres_data:
+    driver: local

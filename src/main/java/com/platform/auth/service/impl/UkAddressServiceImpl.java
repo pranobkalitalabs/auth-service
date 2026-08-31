@@ -32,7 +32,7 @@ public class UkAddressServiceImpl implements UkAddressService {
             return false;
         }
 
-        String cleanedPostcode = postcode.trim().replaceAll("\\s+", "");
+        String cleanedPostcode = postcode.trim().replaceAll("\\s+", "").toUpperCase();
 
         try {
             JsonNode response = addressServiceRestClient.get()
@@ -61,7 +61,7 @@ public class UkAddressServiceImpl implements UkAddressService {
             return UkAddressLookupResponse.invalid(postcode);
         }
 
-        String cleanedPostcode = postcode.trim().replaceAll("\\s+", "");
+        String cleanedPostcode = postcode.trim().replaceAll("\\s+", "").toUpperCase();
 
         try {
             JsonNode response = addressServiceRestClient.get()

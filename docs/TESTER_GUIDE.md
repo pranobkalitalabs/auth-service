@@ -6,23 +6,46 @@ This guide is designed for **QA Engineers and Testers** to easily run, test, and
 
 ## 🚀 1. How to Run Locally
 
-### Option A: Run Full Containerized Stack with Docker Compose (Recommended)
+### Option A: Standalone Docker Compose (1-Click Local Auth Stack)
+If you are developing or testing `auth-service` independently:
 ```bash
-# From workspace root:
+cd auth-service
 docker compose up -d
 ```
-This automatically starts:
+This automatically boots:
 - `auth-service` (Port **`8081`**)
-- `address-service` (Port **`8082`**)
-- `platform-redis` (Port **`6379`**)
 - `auth-postgres` (Port **`5432`**)
 - `auth-mailpit` (Port **`8025`**)
 
-### Option B: Build Local Container via Google Jib
+### Option B: Unified Platform Stack (From Workspace Root)
+```bash
+docker compose up -d
+```
+Starts all services together (`auth-service` + `address-service` + `platform-redis` + `auth-postgres` + `auth-mailpit`).
+
+### Option C: Build Local Container via Google Jib
 ```bash
 cd auth-service
 mvn compile jib:dockerBuild
 ```
+
+---
+
+## 🥒 2. Behavior-Driven Development (BDD) Cucumber Testing
+
+We use **Cucumber 7**, **Gherkin (.feature files)**, and **REST Assured** for living test specifications:
+
+```bash
+# Run only the BDD Cucumber Suite:
+mvn test -Dtest=AuthCucumberTest
+
+# Run all Unit + Integration + BDD Tests:
+mvn clean test
+```
+
+### 📊 Living HTML Reports:
+Every test run automatically generates an interactive, styled HTML test report at:  
+👉 **`auth-service/target/cucumber-reports/cucumber.html`** *(open in any web browser)*.
 
 ---
 
