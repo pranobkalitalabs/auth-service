@@ -16,7 +16,24 @@ Step-by-step documentation for deploying `auth-service` to Google Cloud Run, con
 
 ---
 
-## 📋 2. Cloud Run Environment Variables
+## 🗄️ 2. Cloud Database & Cache Providers
+
+### A. Neon Serverless PostgreSQL (`auth-service` Database)
+* **Provider**: [Neon.tech](https://neon.tech)
+* **Tier**: Free Forever Serverless PostgreSQL
+* **Region**: `Europe (London / Frankfurt)`
+* **Connection Format**: `postgresql://<username>:<password>@<endpoint-pooler>.aws.neon.tech/<dbname>?sslmode=require`
+
+### B. Upstash Serverless Redis (Token Blacklist Cache)
+* **Provider**: [Upstash Redis](https://upstash.com)
+* **Tier**: Free Forever (10,000 commands/day)
+* **Region**: `eu-west-1 (Ireland / Frankfurt)`
+* **TLS Encryption**: Enabled on Port `6379`
+* **Connection Format**: `redis-cli --tls -u redis://default:<password>@<endpoint-name>.upstash.io:6379`
+
+---
+
+## 📋 3. Cloud Run Environment Variables
 
 These variables are configured in the Google Cloud Run Service under **Container $\rightarrow$ Environment Variables**:
 
@@ -31,7 +48,7 @@ These variables are configured in the Google Cloud Run Service under **Container
 | `DB_PASSWORD` | Database | PostgreSQL user password | `<db_password>` |
 | `ADDRESS_SERVICE_URL` | Integration | Production URL of the downstream address microservice | `https://address.pranobkalitalabs.co.uk` |
 | `JWT_SECRET` | Security | 256-bit HS512 cryptographic signing secret key | `<256-bit-hex-or-base64-secret-key>` |
-| `REDIS_HOST` | Cache | Upstash / Cloud Redis endpoint hostname | `<upstash-redis-hostname>.upstash.io` |
+| `REDIS_HOST` | Cache | Upstash Redis endpoint hostname | `<upstash-redis-hostname>.upstash.io` |
 | `REDIS_PORT` | Cache | Redis port | `6379` |
 | `REDIS_PASSWORD` | Cache | Redis auth password | `<upstash-redis-password>` |
 | `REDIS_SSL_ENABLED` | Cache | Enables TLS connection for cloud Redis | `true` |
@@ -39,7 +56,7 @@ These variables are configured in the Google Cloud Run Service under **Container
 
 ---
 
-## 🌐 3. Domain Mapping & Namecheap DNS
+## 🌐 4. Domain Mapping & Namecheap DNS
 
 ### Cloud Run Domain Mapping:
 * **Service**: `auth-service (europe-west1)`
@@ -54,7 +71,7 @@ These variables are configured in the Google Cloud Run Service under **Container
 
 ---
 
-## 🤖 4. Automated CI/CD Deployment (GitHub Actions)
+## 🤖 5. Automated CI/CD Deployment (GitHub Actions)
 
 Every push to `main` executes `.github/workflows/docker-ci-cd.yml`:
 1. Executes unit, integration, and Cucumber 7 BDD test suites against ephemeral PostgreSQL.
@@ -68,7 +85,7 @@ Every push to `main` executes `.github/workflows/docker-ci-cd.yml`:
 
 ---
 
-## 🔒 5. Health & Smoke Testing
+## 🔒 6. Health & Smoke Testing
 
 ```bash
 # 1. Health Probe
