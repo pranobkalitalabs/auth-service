@@ -1,98 +1,84 @@
-# ☁️ Auth Service - Google Cloud Platform (GCP) Deployment Guide
+# 🚀 Auth Service - Google Cloud Platform (GCP) Deployment Guide
 
-This guide details the exact steps to deploy **`auth-service`** to **Google Cloud Run**, connect to a cloud PostgreSQL database, and map the custom domain **`auth.pranobkalitalabs.co.uk`**.
-
----
-
-## 🏛️ GCP Architecture for Auth Service
-
-```
-                 https://auth.pranobkalitalabs.co.uk
-                                 │
-                                 ▼
-                     [ Google Cloud Run: auth ]
-                       (europe-west1 Belgium)
-                                 │
-                 ┌───────────────┴───────────────┐
-                 ▼                               ▼
-       [ Cloud PostgreSQL ]           [ address-service ]
-     (Neon / Supabase / SQL)       (https://address.pranobkalitalabs.co.uk)
-```
+Step-by-step documentation for deploying `auth-service` to Google Cloud Run, connecting Neon PostgreSQL and Upstash Redis, domain mapping on Namecheap, and GitHub Actions CI/CD automation.
 
 ---
 
-## 🛠️ Step-by-Step Deployment
+## 🏗️ 1. Service Specifications
 
-### Step 1: Set Up Cloud PostgreSQL Database
-For serverless cloud deployment, you can use:
-- **[Neon.tech](https://neon.tech)** (100% Free Serverless Postgres) or **[Supabase](https://supabase.com)**
-- Note your database credentials:
-  - `DB_HOST`: e.g. `ep-cool-fog-12345.eu-central-1.aws.neon.tech`
-  - `DB_PORT`: `5432`
-  - `DB_NAME`: `authdb` (or `neondb`)
-  - `DB_USERNAME`: `your_user`
-  - `DB_PASSWORD`: `your_password`
+* **Service Name**: `auth-service`
+* **Region**: `europe-west1 (Belgium)`
+* **Container Image**: `pkalita/auth-service:latest`
+* **Port**: `8081`
+* **Allocated Memory**: `1 GiB`
+* **Allocated CPU**: `1 vCPU`
+* **Authentication**: `Allow unauthenticated invocations`
 
 ---
 
-### Step 2: Deploy Container to Google Cloud Run
-1. Go to **[Google Cloud Console](https://console.cloud.google.com)** $\rightarrow$ Select project **`pranobkalitalabs`**.
-2. Go to **Cloud Run** $\rightarrow$ Click **`Deploy container`** $\rightarrow$ **`Service`**.
-3. Configure:
-   - **Container image URL**: `docker.io/pkalita/auth-service:latest`
-   - **Service name**: `auth-service`
-   - **Region**: **`europe-west1 (Belgium)`** *(supports direct 1-click domain mapping)*
-   - **Authentication**: `Allow unauthenticated invocations`
-4. In **Containers, Volumes, Networking, Security**:
-   - **Security**: Select `Default compute service account`.
-   - **Variables & Secrets**: Add environment variables:
-     - `SPRING_PROFILES_ACTIVE` = `prod`
-     - `DB_HOST` = `<your-cloud-postgres-host>`
-     - `DB_PORT` = `5432`
-     - `DB_NAME` = `authdb`
-     - `DB_USERNAME` = `<your-db-user>`
-     - `DB_PASSWORD` = `<your-db-password>`
-     - `ADDRESS_SERVICE_URL` = `https://address.pranobkalitalabs.co.uk`
-     - `JWT_SECRET` = `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970`
-     - `CORS_ALLOWED_ORIGINS` = `https://pranobkalitalabs.co.uk,https://*.pranobkalitalabs.co.uk`
-5. Click **Create**!
+## 📋 2. Cloud Run Environment Variables
+
+These variables are configured in the Google Cloud Run Service under **Container $\rightarrow$ Environment Variables**:
+
+| Variable Name | Category | Purpose / Description | Format / Example Value |
+| :--- | :--- | :--- | :--- |
+| `SERVER_PORT` | System | Container HTTP server listening port | `8081` |
+| `SPRING_PROFILES_ACTIVE` | Runtime | Activates PostgreSQL datasource and Flyway migrations | `docker` |
+| `DB_HOST` | Database | Neon Serverless PostgreSQL host | `<neon-subdomain>.aws.neon.tech` |
+| `DB_PORT` | Database | PostgreSQL port | `5432` |
+| `DB_NAME` | Database | Database name with SSL query parameter | `<db_name>?sslmode=require` |
+| `DB_USERNAME` | Database | PostgreSQL username | `<db_user_owner>` |
+| `DB_PASSWORD` | Database | PostgreSQL user password | `<db_password>` |
+| `ADDRESS_SERVICE_URL` | Integration | Production URL of the downstream address microservice | `https://address.pranobkalitalabs.co.uk` |
+| `JWT_SECRET` | Security | 256-bit HS512 cryptographic signing secret key | `<256-bit-hex-or-base64-secret-key>` |
+| `REDIS_HOST` | Cache | Upstash / Cloud Redis endpoint hostname | `<upstash-redis-hostname>.upstash.io` |
+| `REDIS_PORT` | Cache | Redis port | `6379` |
+| `REDIS_PASSWORD` | Cache | Redis auth password | `<upstash-redis-password>` |
+| `REDIS_SSL_ENABLED` | Cache | Enables TLS connection for cloud Redis | `true` |
+| `CORS_ALLOWED_ORIGINS` | Security | Allowed Web origins for cross-origin requests | `https://pranobkalitalabs.co.uk,https://*.pranobkalitalabs.co.uk` |
 
 ---
 
-### Step 3: Map Custom Domain (`auth.pranobkalitalabs.co.uk`)
+## 🌐 3. Domain Mapping & Namecheap DNS
 
-1. In Cloud Run, go to **`Domain mappings`** $\rightarrow$ Click **`+ Add mapping`**.
-2. Select service: **`auth-service (europe-west1)`**.
-3. Enter domain: **`auth.pranobkalitalabs.co.uk`**.
-4. In **Namecheap** $\rightarrow$ **Advanced DNS** $\rightarrow$ Click **`+ ADD NEW RECORD`**:
-   - **Type**: `CNAME Record`
-   - **Host**: `auth`
-   - **Value**: `ghs.googlehosted.com`
-   - **TTL**: `Automatic`
-5. Save! Google Cloud will provision the free SSL certificate in ~10–15 minutes.
+### Cloud Run Domain Mapping:
+* **Service**: `auth-service (europe-west1)`
+* **Verified Domain**: `pranobkalitalabs.co.uk`
+* **Subdomain**: `auth` *(mapping resolves to `auth.pranobkalitalabs.co.uk`)*
 
----
-
-## 🤖 Automated Continuous Deployment (GitHub Actions CD)
-
-Whenever you push to the `main` branch, GitHub Actions automatically:
-1. Executes the unit, integration, and Cucumber BDD test suites.
-2. Builds the multi-arch container image with Jib and publishes to Docker Hub.
-3. Automatically triggers **Google Cloud Run** to roll out a new revision with zero downtime.
-
-### Required GitHub Repository Secrets (`Settings -> Secrets and variables -> Actions`):
-- `DOCKERHUB_USERNAME`: Your Docker Hub username.
-- `DOCKERHUB_TOKEN`: Your Docker Hub personal access token.
-- `GCP_SA_KEY`: Google Cloud Service Account JSON Key (with `Cloud Run Admin` & `Service Account User` roles).
+### Namecheap Host Record:
+* **Type**: `CNAME Record`
+* **Host**: `auth`
+* **Value**: `ghs.googlehosted.com.`
+* **TTL**: `Automatic`
 
 ---
 
-## 🔒 Production Smoke Test
+## 🤖 4. Automated CI/CD Deployment (GitHub Actions)
+
+Every push to `main` executes `.github/workflows/docker-ci-cd.yml`:
+1. Executes unit, integration, and Cucumber 7 BDD test suites against ephemeral PostgreSQL.
+2. Builds multi-arch container image with Google Jib and pushes to Docker Hub.
+3. Authenticates with Google Cloud and rolls out a new Cloud Run revision.
+
+### Required GitHub Repository Secrets:
+* `DOCKERHUB_USERNAME`: Docker Hub user ID.
+* `DOCKERHUB_TOKEN`: Docker Hub Personal Access Token.
+* `GCP_SA_KEY`: Google Cloud Service Account JSON key (`Cloud Run Admin` + `Service Account User`).
+
+---
+
+## 🔒 5. Health & Smoke Testing
 
 ```bash
-# Health Check
-curl https://auth.pranobkalitalabs.co.uk/actuator/health
+# 1. Health Probe
+curl -s https://auth.pranobkalitalabs.co.uk/actuator/health
 
-# Swagger UI
+# 2. Admin User Login
+curl -s -X POST https://auth.pranobkalitalabs.co.uk/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"<admin-email>","password":"<admin-password>"}'
+
+# 3. Swagger UI
 open https://auth.pranobkalitalabs.co.uk/swagger-ui.html
 ```
