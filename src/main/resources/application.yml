@@ -53,4 +53,9 @@ management:
         include: health,info,metrics
   endpoint:
     health:
-      show-details: when_authorized
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    redis:
+      enabled: false
