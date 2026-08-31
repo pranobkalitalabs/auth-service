@@ -3,6 +3,14 @@ spring:
     name: auth-service
   profiles:
     default: dev
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+      timeout: 3000ms
   jpa:
     open-in-view: false
     properties:
